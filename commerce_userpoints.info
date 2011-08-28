@@ -1,0 +1,11 @@
+name = Commerce user points
+description = Allow commerce customer to create a line item using userpoints points
+package = Custom
+core = 7.x
+  
+dependencies[] = entity
+dependencies[] = userpoints
+dependencies[] = commerce
+
+files[] = includes/commerce_userpoints.checkout_pane.inc
+files[] = includes/views/commerce_userpoints.views_default.inc
