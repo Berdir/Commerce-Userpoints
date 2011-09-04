@@ -215,7 +215,7 @@ function commerce_userpoints_payment_method_submit_form_validate($payment_method
   $required_points = commerce_userpoints_payment_method_get_required_points($payment_method['settings'], $order);
   $resulting_balance = $current_points - $required_points;
 
-  if ($resulting_balance > $credit_limit) {
+  if ($resulting_balance < $credit_limit) {
     form_set_error(implode('][', array_merge($form_parents, array('required'))), t('Not enough !points.', userpoints_translation()));
 
     // Even though the form error is enough to stop the submission of the form,
