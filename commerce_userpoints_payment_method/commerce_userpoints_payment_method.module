@@ -1,0 +1,269 @@
+<?php
+
+/**
+ * Implements hook_currency_info().
+ */
+function commerce_userpoints_payment_method_commerce_currency_info() {
+  return array (
+    'Points' => array(
+      'code' => 'Points',
+      'numeric_code' => '999',
+      'symbol' => 'Points',
+      'name' => t('!Points', userpoints_translation()),
+      'symbol_placement' => 'after',
+      'code_placement' => 'hidden',
+      'format_callback' => 'commerce_userpoints_payment_method_format_price',
+      'rounding_step' => '1',
+    ),
+  );
+}
+
+/**
+ * Currency format callback.
+ */
+function commerce_userpoints_payment_method_format_price($price, $currency, $context) {
+  return t('@price !points', array('@price' => $price) + userpoints_translation());
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_userpoints_payment_method_commerce_payment_method_info() {
+  $payment_methods['commerce_userpoints'] = array(
+    'base' => 'commerce_userpoints_payment_method',
+    'title' => t('!Points', userpoints_translation()),
+    'short_title' => t('!Points', userpoints_translation()),
+    'description' => t('Pay with !Points', userpoints_translation()),
+    'active' => TRUE,
+  );
+  return $payment_methods;
+}
+
+/**
+ * Payment method callback: submit form submission.
+ */
+function commerce_userpoints_payment_method_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order->data['commerce_userpoints'] = $pane_values;
+
+  commerce_userpoints_payment_method_transaction($payment_method, $order, $charge, $pane_values['name']);
+}
+
+/**
+ * Creates a userpoints payment transaction for the specified charge amount.
+ *
+ * @param $payment_method
+ *   The payment method instance object used to charge this payment.
+ * @param $order
+ *   The order object the payment applies to.
+ * @param $charge
+ *   An array indicating the amount and currency code to charge.
+ * @param $name
+ *   The name entered on the submission form.
+ */
+function commerce_userpoints_payment_method_transaction($payment_method, $order, $charge, $name) {
+  $transaction = commerce_payment_transaction_new('commerce_userpoints', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  $transaction->message = 'Paid with !points.';
+  $transaction->message_variables = userpoints_translation();
+
+  commerce_payment_transaction_save($transaction);
+
+  userpoints_userpointsapi(array(
+    'points' => ($charge['amount'] / 100) * -1,
+    'uid' => $order->uid,
+    'operation' => 'commerce_userpoints_payment_method_payment',
+    'entity_id' => $order->order_id,
+    'entity_type' => 'commerce_order',
+  ));
+}
+
+/**
+ * Implements hook_userpoints_info().
+ */
+function commerce_userpoints_payment_method_userpoints_info() {
+  return array(
+    'commerce_userpoints_payment_method_payment' => array(
+      'description' => t('Paid an order.'),
+    ),
+  );
+}
+
+/**
+ * Returns the current points credit limit.
+ *
+ * @param $settings
+ *   The payment method settings.
+ */
+function commerce_userpoints_payment_method_get_credit_limit($settings) {
+  return $settings['min_points'];
+}
+
+/**
+ * Returns the exchange rate of the order currency.
+ *
+ * @param $settings
+ *   The payment method settings.
+ * @param $order
+ *   The commerce_order object.
+ */
+function commerce_userpoints_payment_method_get_exchange_rate($settings, $order) {
+  $order_total = array_shift(field_get_items('commerce_order', $order, 'commerce_order_total'));
+
+  return $settings['currencies'][$order_total['currency_code']];
+}
+
+/**
+ *
+ * @param $settings
+ * @param $order
+ * @return
+ */
+function commerce_userpoints_payment_method_get_required_points($settings, $order) {
+  $order_total = array_shift(field_get_items('commerce_order', $order, 'commerce_order_total'));
+
+  $exchange_rate = commerce_userpoints_payment_method_get_exchange_rate($settings, $order);
+  return ($order_total['amount'] / 100) * $exchange_rate;
+}
+
+/**
+ * Payment method callback: submit form.
+ */
+function commerce_userpoints_payment_method_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+
+  $credit_limit = commerce_userpoints_payment_method_get_credit_limit($payment_method['settings']);
+  $current_points = userpoints_get_current_points($order->uid);
+  $exchange_rate = commerce_userpoints_payment_method_get_exchange_rate($payment_method['settings'], $order);
+  if ($exchange_rate == 0) {
+    $form['validation'] = array(
+      '#type' => 'item',
+      '#markup' => t('This order can not be paid with !points.', userpoints_translation()),
+    );
+    return $form;
+  }
+
+  $required_points = commerce_userpoints_payment_method_get_required_points($payment_method['settings'], $order);
+  $resulting_balance = $current_points - $required_points;
+
+  $header = array(
+    array(
+      'data' => t('!Points requirements', userpoints_translation()),
+      'colspan' => 2,
+    ),
+  );
+
+  $rows = array(
+    array(
+      t('Current !points', userpoints_translation()),
+      $current_points,
+    ),
+    array(
+      t('!Points credit limit', userpoints_translation()),
+      $credit_limit,
+    ),
+    array(
+      t('Exchange rate'),
+      $exchange_rate,
+    ),
+    array(
+      t('Required !points', userpoints_translation()),
+      '<strong>' . $required_points . '</strong>',
+    ),
+    array(
+      t('Resulting balance'),
+      $resulting_balance,
+    ),
+  );
+
+  $form['table'] = array(
+    '#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => $header,
+  );
+
+  if ($resulting_balance > $credit_limit) {
+    $form['validation'] = array(
+      '#type' => 'item',
+      '#markup' => t('You have enough !points!', userpoints_translation()),
+    );
+  }
+  else {
+    $form['validation'] = array(
+      '#type' => 'item',
+      '#markup' => t('You have not <strong>not</strong> enough !points!', userpoints_translation()),
+    );
+  }
+  return $form;
+}
+
+/**
+ * Payment method callback: submit form validation.
+ */
+function commerce_userpoints_payment_method_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  $credit_limit = commerce_userpoints_payment_method_get_credit_limit($payment_method['settings']);
+  $current_points = userpoints_get_current_points($order->uid);
+  $conversion = commerce_userpoints_payment_method_get_exchange_rate($payment_method['settings'], $order);
+
+  if ($conversion == 0) {
+    form_set_error(implode('][', array_merge($form_parents, array('required'))), t('This order can not be paid with !points.', userpoints_translation()));
+    return FALSE;
+  }
+
+  $required_points = commerce_userpoints_payment_method_get_required_points($payment_method['settings'], $order);
+  $resulting_balance = $current_points - $required_points;
+
+  if ($resulting_balance > $credit_limit) {
+    form_set_error(implode('][', array_merge($form_parents, array('required'))), t('Not enough !points.', userpoints_translation()));
+
+    // Even though the form error is enough to stop the submission of the form,
+    // it's not enough to stop it from a Commerce standpoint because of the
+    // combined validation / submission going on per-pane in the checkout form.
+    return FALSE;
+  }
+}
+
+/**
+ * Payment method callback; return the settings form for a payment method.
+ *
+ * @param $settings
+ *   An array of the current settings.
+ * @return
+ *   A form snippet.
+ */
+function commerce_userpoints_payment_method_settings_form($settings = NULL) {
+  if (!is_array($settings)) {
+    $settings = array();
+  }
+
+  $settings += array(
+    'min_points' => 0,
+    'currencies' => array(),
+  );
+
+  $form['min_points'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimal !points balance limit', userpoints_translation()),
+    '#default_value' => $settings['min_points']
+  );
+
+  $form['currencies']['#tree'] = TRUE;
+
+  $rows = array();
+  foreach (commerce_currencies(TRUE) as $key => $currency) {
+    $settings['currencies'] += array(
+      $key => 1,
+    );
+
+    $form['currencies'][$key] = array(
+      '#type' => 'textfield',
+      '#title' => t('Exchange rate for @currency', array('@currency' => $currency['name'])),
+      '#default_value' => $settings['currencies'][$key],
+      '#description' => t('A value of 0 prohibits using !points for this currency.', userpoints_translation())
+    );
+  }
+
+  return $form;
+}

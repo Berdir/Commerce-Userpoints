@@ -1,0 +1,9 @@
+name = Commerce Userpoints Payment method
+description = Adds a payment provider which allows to pay with points.
+package = Custom
+core = 7.x
+  
+dependencies[] = entity
+dependencies[] = userpoints
+dependencies[] = commerce
+dependencies[] = commerce_payment
