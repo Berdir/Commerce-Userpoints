@@ -1,0 +1,7 @@
+<?php
+
+function commerce_userpoints_uninstall() {
+  variable_del('commerce_userpoints_default_termid');
+  variable_del('commerce_userpoints_total_price_components');
+  variable_del('commerce_userpoints_royalties_multiple');
+}

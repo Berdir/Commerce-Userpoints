@@ -47,6 +47,14 @@ function commerce_userpoints_admin() {
     '#required' => TRUE,
   );
 
+  $form['commerce_userpoints_royalties_multiple'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Currency conversion rate'),
+    '#description' => t('!!! WARNING !!! This field defines the conversion rate from points to any currency of your site. Keep a value of 1 for 1currency = 100 points'),
+    '#default_value' => variable_get('commerce_userpoints_royalties_multiple', 1),
+    '#required' => TRUE,
+  );
+
   return system_settings_form($form);
 }
 
@@ -93,12 +101,10 @@ function commerce_userpoints_commerce_line_item_type_info() {
 }
 
 /**
- *
  * This function is called by the line item module when it is enabled or this
  * module is enabled. It invokes this function using the configuration_callback
  * as specified above.
  */
-
 function commerce_userpoints_configure_line_item() {
   $entity_type = 'commerce_line_item';
   $bundle = 'userpoints';
@@ -198,7 +204,7 @@ function commerce_userpoints_line_item_add_form_submit(&$line_item, $element, &$
   }
   
   $userpoints_params = array(
-    'points' => floatval($element['actions']['amount']['#value']),
+    'points' => intval($element['actions']['amount']['#value']),
     'uid' => $order->uid,
     'operation' => 'commerce_userpoints_credit',
     'tid' => variable_get('commerce_userpoints_default_termid', userpoints_get_default_tid()),
@@ -210,7 +216,7 @@ function commerce_userpoints_line_item_add_form_submit(&$line_item, $element, &$
   $result = userpoints_userpointsapi($userpoints_params);
 
   $label = "TXNID" . $result['transaction']['txn_id'];
-  commerce_userpoints_line_item_populate($line_item, $order->order_id, $result['transaction'], $element['actions']['currency_code']['#value'], $label, TRUE);
+  commerce_userpoints_line_item_populate($line_item, $order->order_id, $result['transaction'], $element['actions']['currency_code']['#value'], $label);
   return;
 }
 
@@ -278,7 +284,15 @@ function _commerce_userpoints_line_item_new() {
   return $line_item;
 }
 
-function commerce_userpoints_line_item_populate(&$line_item, $order_id, $userpoints_txn, $currency, $label, $multiply = FALSE) {
+/**
+ * @param  $line_item
+ * @param  $order_id
+ * @param  $userpoints_txn
+ * @param  $currency
+ * @param  $label
+ * @return the populated line item
+ */
+function commerce_userpoints_line_item_populate(&$line_item, $order_id, $userpoints_txn, $currency, $label) {
   if (!($line_item instanceof EntityMetadataWrapper)) {
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
   }
@@ -287,8 +301,7 @@ function commerce_userpoints_line_item_populate(&$line_item, $order_id, $userpoi
   $line_item_wrapper->commerce_userpoints_txn = $userpoints_txn['txn_id'];
   $line_item_wrapper->line_item_label = t($label);
   $line_item_wrapper->commerce_unit_price->currency_code = $currency;
-  $line_item_wrapper->commerce_unit_price->amount =
-    $multiply ? intval($userpoints_txn['points']) * 100 : intval($userpoints_txn['points']);
+  $line_item_wrapper->commerce_unit_price->amount = intval($userpoints_txn['points']) / variable_get('commerce_userpoints_royalties_multiple', 1);
   $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
       $line_item_wrapper->commerce_unit_price->value(),
     'userpoints',
@@ -367,42 +380,6 @@ function commerce_userpoints_entity_delete($entity, $type) {
   }
 }
 
-/**
- * Implements hook_entity_create
- * When a line item of userpoints type is created, we create a userpoint transaction
- * @param  $entity
- * @param  $type
- * @return void
- */
-function commerce_userpoints_entity_insert($entity, $type) {
-/*  if($type == 'commerce_line_item') {
-    if($entity->type == 'userpoints') {
-
-      $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $entity);
-      $order = commerce_order_load($line_item_wrapper->order_id);
-
-      //Create the userpoints transaction
-      $userpoints_params = array(
-        'points' => floatval($line_item_wrapper->commerce_unit_price->amount) / 100,
-        'moderate' => FALSE,
-        'uid' => $order->uid,
-        'time_stamp' => REQUEST_TIME,
-        'operation' => t('Using credit for purchase'),
-        'tid' => variable_get('commerce_userpoints_default_termid'),
-        'expirydate' => NULL,
-        'description' => t('User credit'),
-        'display' => FALSE,
-        'entity_id' => $order->order_id,
-        'entity_type' => 'commerce_order',
-      );
-
-      $result = userpoints_userpointsapi($userpoints_params);
-      $line_item_wrapper->commerce_userpoints_transaction = $result['transaction']['txn_id'];
-      $line_item_wrapper->save();
-    }
-  }*/
-}
-
 function commerce_userpoints_commerce_price_component_type_info() {
   return array(
     'userpoints' => array(
@@ -414,7 +391,6 @@ function commerce_userpoints_commerce_price_component_type_info() {
 }
 
 function commerce_userpoints_form_alter(&$form, &$form_values, $form_id) {
-  
   if (strpos($form_id, 'commerce_checkout_form_checkout') === 0) {
     $form['cart_contents']['#prefix'] = '<div id="cup-available-credit-div">';
     $form['cart_contents']['#suffix'] = '</div>';
@@ -446,7 +422,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
   $commerce_order_total_field = field_get_items('commerce_order', $order, 'commerce_order_total');
   foreach($commerce_order_total_field[0]['data']['components'] as $price_component) {
     if(array_key_exists($price_component['name'], variable_get('commerce_userpoints_total_price_components'))) {
-      $order_total += floatval($price_component['price']['amount']) / 100; //TODO:make the 100 variable, based on the decimal settings
+      $order_total += intval($price_component['price']['amount']) / variable_get('commerce_userpoints_royalties_multiple', 1);
     }
    // dpm($price_component, "price component");
   }
@@ -455,7 +431,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     $points_to_use = $cur_user_points >= $order_total ? $order_total : $cur_user_points;
   }
   else {
-    $points_to_use = floatval($form_state['values']['commerce_userpoints']['cup_credit_amount']);
+    $points_to_use = intval($form_state['values']['commerce_userpoints']['cup_credit_amount']);
 
     if(intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) > $cur_user_points) {
       form_set_error('cup_credit_amount', t("You don't have enough credit"));
@@ -505,7 +481,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     $label = "User credit";
     commerce_userpoints_line_item_populate(
       $line_item, $order->order_id,
-      $result['transaction'], commerce_default_currency(), $label, TRUE);
+      $result['transaction'], commerce_default_currency(), $label);
 
     //TODO: Should test if the line item has been correctly created
     commerce_userpoints_line_item_save($line_item);
@@ -540,7 +516,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     $label = "User credit";
     commerce_userpoints_line_item_populate(
       $line_item, $order->order_id,
-      $result['transaction'], commerce_default_currency(), $label, TRUE);
+      $result['transaction'], commerce_default_currency(), $label);
 
     //TODO: Should test if the line item has been correctly created
     commerce_userpoints_line_item_save($line_item);
