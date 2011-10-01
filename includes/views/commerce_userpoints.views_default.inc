@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Views for the default order UI.
+ * @file
+ * Default views for commerce cart summary
  */
 
 /**

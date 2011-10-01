@@ -12,7 +12,7 @@ function commerce_userpoints_menu() {
     'page arguments' => array('commerce_userpoints_admin'),
     'access arguments' => array('access administration pages'),
     'type' => MENU_NORMAL_ITEM,
-   );
+  );
 
   return $items;
 }
@@ -31,7 +31,7 @@ function commerce_userpoints_admin() {
 
   $price_components_options = array();
   $price_components_list = commerce_price_component_types();
-  foreach($price_components_list as $price_component) {
+  foreach ($price_components_list as $price_component) {
     $price_components_options[$price_component['name']] = $price_component['name'];
   }
   unset($price_components_options['userpoints']);
@@ -83,7 +83,7 @@ function commerce_userpoints_commerce_checkout_pane_info() {
 }
 
 /**
- * Implements hook_commerce_line_item_type_info()
+ * Implements hook_commerce_line_item_type_info().
  */
 function commerce_userpoints_commerce_line_item_type_info() {
   $line_item_types['userpoints'] = array(
@@ -196,13 +196,12 @@ function commerce_userpoints_line_item_add_form($form_state) {
 function commerce_userpoints_line_item_add_form_submit(&$line_item, $element, &$form_state, $form) {
   // TODO: Implement this method correct
   $order = $form_state['commerce_order'];
-  if($element['actions']['amount']['#value'] >= 0) {
+  if ($element['actions']['amount']['#value'] >= 0) {
     form_set_error("Illegal value", "The amount should be less than 0");
   }
   if ($element['actions']['amount']['#value'] > userpoints_get_current_points($order->uid, variable_get('commerce_userpoints_default_termid'))) {
     form_set_error("Not enough credit", "The user don't have enough !points", userpoints_translation());
   }
-  
   $userpoints_params = array(
     'points' => intval($element['actions']['amount']['#value']),
     'uid' => $order->uid,
@@ -244,7 +243,7 @@ function commerce_userpoints_order_has_userpoint_line_item($order_id) {
     ->propertyCondition('order_id', $order_id, '=')
     ->execute();
 
-  if(empty($result))
+  if (empty($result))
     return NULL;
   $line_item = array_shift($result['commerce_line_item']);
   return $line_item->line_item_id;
@@ -258,7 +257,7 @@ function commerce_userpoints_order_has_userpoint_line_item($order_id) {
  */
 function commerce_userpoints_line_item_factory_new($order_id) {
   $line_item_id = commerce_userpoints_order_has_userpoint_line_item($order_id);
-  if($line_item_id == NULL)
+  if ($line_item_id == NULL)
     return _commerce_userpoints_line_item_new();
 
   return commerce_line_item_load($line_item_id);
@@ -364,8 +363,8 @@ function commerce_userpoints_clear_order($order_id) {
  * @return void
  */
 function commerce_userpoints_entity_delete($entity, $type) {
-  if($type == 'commerce_line_item') {
-    if($entity->type == 'userpoints') {
+  if ($type == 'commerce_line_item') {
+    if ($entity->type == 'userpoints') {
       //Get the existing transaction
       $txn_field = field_get_items('commerce_line_item', $entity, 'commerce_userpoints_txn');
 
@@ -415,48 +414,48 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
   $cur_user_points = userpoints_get_current_points(NULL, variable_get('commerce_userpoints_default_termid'));
 
   //If the current user is out of points, we leave directly
-  if($cur_user_points == 0) return;
+  if ($cur_user_points == 0) return;
 
   //Retrieve the order total for selected components
   $order_total = 0;
   $commerce_order_total_field = field_get_items('commerce_order', $order, 'commerce_order_total');
-  foreach($commerce_order_total_field[0]['data']['components'] as $price_component) {
-    if(array_key_exists($price_component['name'], variable_get('commerce_userpoints_total_price_components'))) {
+  foreach ($commerce_order_total_field[0]['data']['components'] as $price_component) {
+    if (array_key_exists($price_component['name'], variable_get('commerce_userpoints_total_price_components'))) {
       $order_total += intval($price_component['price']['amount']) / variable_get('commerce_userpoints_royalties_multiple', 1);
     }
    // dpm($price_component, "price component");
   }
 
-  if($use_all_credit) {
+  if ($use_all_credit) {
     $points_to_use = $cur_user_points >= $order_total ? $order_total : $cur_user_points;
   }
   else {
     $points_to_use = intval($form_state['values']['commerce_userpoints']['cup_credit_amount']);
 
-    if(intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) > $cur_user_points) {
+    if (intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) > $cur_user_points) {
       form_set_error('cup_credit_amount', t("You don't have enough credit"));
       return FALSE;
     }
 
-    if(intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) < 0) {
+    if (intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) < 0) {
       form_set_error('cup_credit_amount', t("The amount should be a positive value"));
       return FALSE;
     }
 
-    if(intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) > $order_total) {
+    if (intval($form_state['values']['commerce_userpoints']['cup_credit_amount']) > $order_total) {
       form_set_error('cup_credit_amount', t("Too much !"));
       return FALSE;
     }
   }
 
   //If there is "no points" to use, we leave directly
-  if($points_to_use == 0)
+  if ($points_to_use == 0)
     return;
   
   $line_item_id = commerce_userpoints_order_has_userpoint_line_item($order->order_id);
 
   //If there is no existing userpoints line item, we create a new one
-  if($line_item_id == NULL) {
+  if ($line_item_id == NULL) {
     //Create the line item
     $line_item = commerce_userpoints_line_item_factory_new($order->order_id);
 
@@ -473,7 +472,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
 
     $result = userpoints_userpointsapi($userpoints_params);
 
-    if($result['status'] == FALSE) {
+    if ($result['status'] == FALSE) {
       form_set_error('Sorry, you cannot use your !points right now. Please contact us for more information', userpoints_translation());
       return FALSE;
     }
@@ -505,7 +504,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     );
     $result = userpoints_userpointsapi($userpoints_params);
 
-    if($result['status'] == FALSE) {
+    if ($result['status'] == FALSE) {
       form_set_error('Sorry, you cannot use your !points right now. Please contact us for more information');
       return FALSE;
     }
