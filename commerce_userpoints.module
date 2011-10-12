@@ -28,29 +28,22 @@ function commerce_userpoints_admin() {
     '#options' => userpoints_get_categories(),
     '#required' => TRUE,
   );
-
-  $price_components_options = array();
-  $price_components_list = commerce_price_component_types();
-  foreach ($price_components_list as $price_component) {
-    $price_components_options[$price_component['name']] = $price_component['name'];
-  }
-  unset($price_components_options['userpoints']);
-
+  
   $form['commerce_userpoints_total_price_components'] = array(
     '#type' => 'select',
     '#title' => t('Allowed price components'),
     '#default_value' => variable_get('commerce_userpoints_total_price_components', array()),
     '#description' => t('Select the list of price component the credit can cover.'),
-    '#options' => $price_components_options,
+    '#options' => commerce_price_component_titles(),
     '#multiple' => TRUE,
-    '#size' => min(12, count($price_components_options)),
+    '#size' => min(12, count(commerce_price_component_titles())),
     '#required' => TRUE,
   );
 
   $form['commerce_userpoints_royalties_multiple'] = array(
     '#type' => 'textfield',
     '#title' => t('Currency conversion rate'),
-    '#description' => t('!!! WARNING !!! This field defines the conversion rate from points to any currency of your site. Keep a value of 1 for 1currency = 100 points'),
+    '#description' => t('!!! WARNING !!! This field defines the conversion rate from points to any currency of your site. Keep a value of "1" for "1 currency = 100 points"'),
     '#default_value' => variable_get('commerce_userpoints_royalties_multiple', 1),
     '#required' => TRUE,
   );
@@ -197,10 +190,10 @@ function commerce_userpoints_line_item_add_form_submit(&$line_item, $element, &$
   // TODO: Implement this method correct
   $order = $form_state['commerce_order'];
   if ($element['actions']['amount']['#value'] >= 0) {
-    form_set_error("Illegal value", "The amount should be less than 0");
+    form_set_error("amount", t("The amount should be less than 0"));
   }
   if ($element['actions']['amount']['#value'] > userpoints_get_current_points($order->uid, variable_get('commerce_userpoints_default_termid'))) {
-    form_set_error("Not enough credit", "The user don't have enough !points", userpoints_translation());
+    form_set_error("amount", t("The user don't have enough !points", userpoints_translation()));
   }
   $userpoints_params = array(
     'points' => intval($element['actions']['amount']['#value']),
@@ -216,7 +209,6 @@ function commerce_userpoints_line_item_add_form_submit(&$line_item, $element, &$
 
   $label = "TXNID" . $result['transaction']['txn_id'];
   commerce_userpoints_line_item_populate($line_item, $order->order_id, $result['transaction'], $element['actions']['currency_code']['#value'], $label);
-  return;
 }
 
 /**
@@ -423,7 +415,6 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     if (array_key_exists($price_component['name'], variable_get('commerce_userpoints_total_price_components'))) {
       $order_total += intval($price_component['price']['amount']) / variable_get('commerce_userpoints_royalties_multiple', 1);
     }
-   // dpm($price_component, "price component");
   }
 
   if ($use_all_credit) {
@@ -473,7 +464,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     $result = userpoints_userpointsapi($userpoints_params);
 
     if ($result['status'] == FALSE) {
-      form_set_error('Sorry, you cannot use your !points right now. Please contact us for more information', userpoints_translation());
+      form_set_error("cup_credit_amount", t("Sorry, you cannot use your !points right now. Please contact us for more information", userpoints_translation()));
       return FALSE;
     }
 
@@ -505,14 +496,14 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     $result = userpoints_userpointsapi($userpoints_params);
 
     if ($result['status'] == FALSE) {
-      form_set_error('Sorry, you cannot use your !points right now. Please contact us for more information');
+      form_set_error("cup_credit_amount", t("Sorry, you cannot use your !points right now. Please contact us for more information", userpoints_translation()));
       return FALSE;
     }
 
     //Create the new line item
     $line_item = commerce_userpoints_line_item_factory_new($order->order_id);
 
-    $label = "User credit";
+    $label = t("User credit");
     commerce_userpoints_line_item_populate(
       $line_item, $order->order_id,
       $result['transaction'], commerce_default_currency(), $label);
