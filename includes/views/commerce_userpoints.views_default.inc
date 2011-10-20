@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Default views for commerce cart summary
@@ -151,7 +150,7 @@ function commerce_userpoints_views_default_views() {
     t('Total'),
     t('Tous / Toutes'),
   );
- 
+
   $views[$view->name] = $view;
 
   return $views;

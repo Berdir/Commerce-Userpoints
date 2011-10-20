@@ -1,12 +1,12 @@
 <?php
-
 /**
  * @file
  * Implements the different hook required by Drupal Commerce module to display specific Checkout Panes
  */
 
+
 /**
- * Payment pane: form callback.
+ * Form implementation set in commerce_userpoints_commerce_checkout_pane_info().
  */
 function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
   $pane_form = array();
@@ -58,19 +58,6 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
     '#submit' => array('commerce_userpoints_remove_credit_callback'),
   );
   return $pane_form;
-}
-
-/**
- * Implement hook_form_validate().
- */
-function commerce_userpoints_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
-  return TRUE;
-}
-/**
- * Implement hook_form_submit().
- */
-function commerce_userpoints_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
-  return;
 }
 
 /**
