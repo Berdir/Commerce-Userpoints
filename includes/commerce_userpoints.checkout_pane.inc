@@ -14,21 +14,22 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
   $pane_form['cup_information'] = array(
     '#type' => 'item',
     '#title' => t('Using your credit'),
-    '#description' => 'Enter the amount of credit you wish to use.',
+    '#description' => t('Enter the amount of credit you wish to use.'),
     '#prefix' => '<div id="cup-available-credit-div">',
     '#suffix' => '</div>',
   );
 
   $pane_form['cup_credit_amount'] = array(
     '#type' => 'textfield',
-    '#title' => 'Amount',
-    '#description' => 'Amount of credit to use.',
+    '#title' => t('Amount'),
+    '#description' => t('Amount of credit to use.'),
     '#size' => 10,
   );
 
   $pane_form['cup_credit_available'] = array(
     '#type' => 'item',
     '#title' => t('Available credit'),
+    '#description' => t('Amount of credit to use.'),
     '#markup' => check_plain(userpoints_get_current_points(NULL, variable_get('commerce_userpoints_default_termid'))),
     '#prefix' => '<div id="cup-available-credit-div">',
     '#suffix' => '</div>',
@@ -36,7 +37,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
 
   $pane_form['cup_submit_all'] = array(
     '#type' => 'submit',
-    '#title' => 'all_credit',
+    '#title' => t('All credit'),
     '#value' => t('Use all my credit'),
     '#limit_validation_errors' => array(),       // No validation.
     '#submit' => array('commerce_userpoints_use_credit_callback_all'),
@@ -52,7 +53,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
 
   $pane_form['cup_remove'] = array(
     '#type' => 'submit',
-    '#title' => 'remove',
+    '#title' => t('Remove'),
     '#value' => t('Get back'),
     '#limit_validation_errors' => array(),       // No validation.
     '#submit' => array('commerce_userpoints_remove_credit_callback'),
@@ -64,7 +65,6 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
  * Implements the callback for the checkout pane review form.
  */
 function commerce_userpoints_pane_review($form, $form_state, $checkout_pane, $order) {
-
   // Extract the View and display keys from the cart contents pane setting.
   list($view_id, $display_id) = explode('|', variable_get('commerce_userpoints_cart_summary', 'commerce_userpoints_cart_summary|default'));
 

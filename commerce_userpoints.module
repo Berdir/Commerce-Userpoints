@@ -14,9 +14,9 @@ function commerce_userpoints_menu() {
   $items = array();
 
   $items['admin/commerce/config/commerce_userpoints'] = array(
-    'title' => 'Commerce !points settings',
+    'title' => t('Commerce !points settings'),
     'title arguments' => userpoints_translation(),
-    'description' => 'Configure the commerce userpoints module',
+    'description' => t('Configure the commerce userpoints module'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_userpoints_admin'),
     'access arguments' => array('access administration pages'),
@@ -27,7 +27,7 @@ function commerce_userpoints_menu() {
 }
 
 /**
- * Implements hook_admin().
+ * Form callback for commerce_userpoints_menu().
  */
 function commerce_userpoints_admin() {
   $form = array();
@@ -114,7 +114,6 @@ function commerce_userpoints_commerce_line_item_type_info() {
 function commerce_userpoints_configure_line_item() {
   $entity_type = 'commerce_line_item';
   $bundle = 'userpoints';
-
   $field_name = 'commerce_userpoints_txn';
   $field = field_info_field($field_name);
   $instance = field_info_instance($entity_type, $field_name, $bundle);
@@ -170,8 +169,8 @@ function commerce_userpoints_line_item_add_form($form_state) {
   $form['current_points'] = array(
     '#type' => 'item',
     '#title' => t('User current !points', userpoints_translation()),
-    /* TODO: Display the correct points value related to the order owner rather than the currently logged in user.
-    Related to this issue http://drupal.org/node/1233790. */
+    // TODO: Display the correct points value related to the order owner rather than the currently logged in user.
+    // Related to this issue http://drupal.org/node/1233790.
     '#markup' => check_plain(userpoints_get_current_points(NULL, variable_get('commerce_userpoints_default_termid'))),
   );
 
@@ -234,7 +233,7 @@ function commerce_userpoints_userpoints_info() {
 
 /**
  * This function checks if an order already have a userpoint line_item type attached to it.
- * @param  $order_id
+ * @param $order_id
  *  Id of the order to check
  *
  * @return ...
@@ -260,7 +259,7 @@ function commerce_userpoints_order_has_userpoint_line_item($order_id) {
  * Safely create or retrieve a userpoints line item from an order.
  * Only one userpoints line item can be created for an order, if the order
  * already have a userpoints line item, it will be returned.
- * @param  $order_id
+ * @param $order_id
  *  Id of the order to check
  *
  * @return ...
@@ -293,16 +292,16 @@ function _commerce_userpoints_line_item_new() {
 
 /**
  * Helper function to populate a userpoints commerce_line_item.
- * @param  ... $line_item
+ * @param ... $line_item
  *  The commerce_line_item to populate. It can be either an array or object of
  *  entity_medatadata_wrapper
- * @param  int $order_id
+ * @param int $order_id
  *  Order id the line item should be assigned to
- * @param  array $userpoints_txn
+ * @param array $userpoints_txn
  *  Userpoints taxonomy term the line item should be populated with
- * @param  string $currency
+ * @param string $currency
  *  Currency code the line item should be populated with
- * @param  string $label
+ * @param string $label
  *  Label the line item should be populated with
  *
  * @return object
@@ -332,7 +331,7 @@ function commerce_userpoints_line_item_populate(&$line_item, $order_id, $userpoi
 
 /**
  * Saves the line item in the database and add it to the appropriate order
- * @param  $line_item
+ * @param $line_item
  *  The line item to be saved
  */
 function commerce_userpoints_line_item_save($line_item) {
@@ -354,9 +353,8 @@ function commerce_userpoints_line_item_save($line_item) {
 function commerce_userpoints_clear_order($order_id) {
   $order = commerce_order_load($order_id);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  /* When deleting more than one line item, metadata_wrapper will give problems
-  if deleting while looping through the line items. So first remove from order
-  and then delete the line items. */
+  // When deleting more than one line item, metadata_wrapper will give problems if deleting while looping through the line items.
+  // So first remove from order and then delete the line items.
   $line_items_to_delete = array();
   foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
     if ($line_item_wrapper->type->value() == 'userpoints') {
@@ -375,10 +373,7 @@ function commerce_userpoints_clear_order($order_id) {
  * Implements hook_entity_delete().
  */
 function commerce_userpoints_entity_delete($entity, $type) {
-  /*
-   * When a line item of userpoints type is delete, we set the related userpoints
-   * transaction to Declined status.
-   */
+  // When a line item of userpoints type is delete, we set the related userpoints transaction to Declined status.
   if ($type == 'commerce_line_item') {
     if ($entity->type == 'userpoints') {
       // Get the existing transaction.
@@ -421,9 +416,9 @@ function commerce_userpoints_form_alter(&$form, &$form_values, $form_id) {
  * Callback function for commerce_userpoints_pane_checkout_form()
  * This function calls the commerce_userpoints_use_credit_callback with the parameters
  * set for the case where the user wishes to use all his points for the current order
- * @param  array $form
+ * @param array $form
  *  $form variable from commerce_userpoints_pane_checkout_form()
- * @param  array $form_state
+ * @param array $form_state
  *  $form_state variable from commerce_userpoints_pane_checkout_form()
  */
 function commerce_userpoints_use_credit_callback_all($form, $form_state) {
@@ -434,9 +429,9 @@ function commerce_userpoints_use_credit_callback_all($form, $form_state) {
  * Callback function for commerce_userpoints_pane_checkout_form()
  * This function calls the commerce_userpoints_use_credit_callback with the parameters
  * set for the case where the user wishes to use a specified amount of points
- * @param  array $form
+ * @param array $form
  *  $form variable from commerce_userpoints_pane_checkout_form()
- * @param  array $form_state
+ * @param array $form_state
  *  $form_state variable from commerce_userpoints_pane_checkout_form()
  */
 function commerce_userpoints_use_credit_callback_input($form, $form_state) {
@@ -447,9 +442,9 @@ function commerce_userpoints_use_credit_callback_input($form, $form_state) {
  * Callback function for commerce_userpoints_pane_checkout_form()
  * This function calls commerce_userpoints_clear_order() to remove all the userpoints
  * line item of the current order
- * @param  array $form
+ * @param array $form
  *  $form variable from commerce_userpoints_pane_checkout_form()
- * @param  array $form_state
+ * @param array $form_state
  *  $form_state variable from commerce_userpoints_pane_checkout_form()
  */
 function commerce_userpoints_remove_credit_callback($form, $form_state) {
@@ -461,11 +456,11 @@ function commerce_userpoints_remove_credit_callback($form, $form_state) {
  * Function called by commerce_userpoints_use_credit_callback_input() and
  * commerce_userpoints_use_credit_callback_all().
  * Perform the creation of the line item for the current order.
- * @param  array $form
+ * @param array $form
  *  $form variable from commerce_userpoints_pane_checkout_form()
- * @param  array $form_state
+ * @param array $form_state
  *  $form_state variable from commerce_userpoints_pane_checkout_form()
- * @param  bool $use_all_credit
+ * @param bool $use_all_credit
  *  TRUE if all the points available should be used for this order. FALSE otherwise
  */
 function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_credit) {
@@ -546,8 +541,7 @@ function commerce_userpoints_use_credit_callback($form, $form_state, $use_all_cr
     commerce_userpoints_line_item_save($line_item);
   }
   else {
-    /* If there is an existing userpoints line item for this order.
-    We load it to get its userpoints transaction id. */
+    // If there is an existing userpoints line item for this order, we load it to get its userpoints transaction id.
     $line_item = commerce_line_item_load($line_item_id);
 
     // Get the existing transaction.

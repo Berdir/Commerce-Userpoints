@@ -7,6 +7,3 @@ dependencies[] = entity
 dependencies[] = userpoints (7.x-1.x)
 dependencies[] = commerce
 dependencies[] = commerce_line_item
-
-files[] = includes/commerce_userpoints.checkout_pane.inc
-files[] = includes/views/commerce_userpoints.views_default.inc
