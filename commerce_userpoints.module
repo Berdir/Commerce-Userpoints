@@ -14,9 +14,9 @@ function commerce_userpoints_menu() {
   $items = array();
 
   $items['admin/commerce/config/commerce_userpoints'] = array(
-    'title' => t('Commerce !points settings'),
+    'title' => 'Commerce !points settings',
     'title arguments' => userpoints_translation(),
-    'description' => t('Configure the commerce userpoints module'),
+    'description' => 'Configure the commerce userpoints module',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_userpoints_admin'),
     'access arguments' => array('access administration pages'),
