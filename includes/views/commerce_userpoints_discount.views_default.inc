@@ -7,10 +7,10 @@
 /**
  * Implements hook_views_default_views().
  */
-function commerce_userpoints_views_default_views() {
+function commerce_userpoints_discount_views_default_views() {
   $views = array();
   $view = new view;
-  $view->name = 'commerce_userpoints_cart_summary';
+  $view->name = 'commerce_userpoints_discount_cart_summary';
   $view->description = 'Userpoints line item summary displayed during checkout.';
   $view->tag = 'commerce';
   $view->base_table = 'commerce_order';
@@ -136,7 +136,7 @@ function commerce_userpoints_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'userpoints' => 'userpoints',
   );
-  $translatables['commerce_userpoints_cart_summary'] = array(
+  $translatables['commerce_userpoints_discount_cart_summary'] = array(
     t('Defaults'),
     t('Royalties déduites'),
     t('more'),

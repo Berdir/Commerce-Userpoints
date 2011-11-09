@@ -6,9 +6,9 @@
 
 
 /**
- * Form implementation set in commerce_userpoints_commerce_checkout_pane_info().
+ * Form implementation set in commerce_userpoints_discount_commerce_checkout_pane_info().
  */
-function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
+function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
   $pane_form = array();
 
   $pane_form['cup_information'] = array(
@@ -30,7 +30,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
     '#type' => 'item',
     '#title' => t('Available credit'),
     '#description' => t('Amount of credit to use.'),
-    '#markup' => check_plain(userpoints_get_current_points(NULL, variable_get('commerce_userpoints_default_termid'))),
+    '#markup' => check_plain(userpoints_get_current_points(NULL, variable_get('commerce_userpoints_discount_default_termid'))),
     '#prefix' => '<div id="cup-available-credit-div">',
     '#suffix' => '</div>',
   );
@@ -40,7 +40,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
     '#title' => t('All credit'),
     '#value' => t('Use all my credit'),
     '#limit_validation_errors' => array(),       // No validation.
-    '#submit' => array('commerce_userpoints_use_credit_callback_all'),
+    '#submit' => array('commerce_userpoints_discount_use_credit_callback_all'),
   );
 
   $pane_form['cup_submit'] = array(
@@ -48,7 +48,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
     //'#title' => 'input_credit',
     '#access' => TRUE,
     '#value' => t('Use credit'),
-    '#submit' => array('commerce_userpoints_use_credit_callback_input'),
+    '#submit' => array('commerce_userpoints_discount_use_credit_callback_input'),
   );
 
   $pane_form['cup_remove'] = array(
@@ -56,7 +56,7 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
     '#title' => t('Remove'),
     '#value' => t('Get back'),
     '#limit_validation_errors' => array(),       // No validation.
-    '#submit' => array('commerce_userpoints_remove_credit_callback'),
+    '#submit' => array('commerce_userpoints_discount_remove_credit_callback'),
   );
   return $pane_form;
 }
@@ -64,9 +64,9 @@ function commerce_userpoints_pane_checkout_form($form, &$form_state, $checkout_p
 /**
  * Implements the callback for the checkout pane review form.
  */
-function commerce_userpoints_pane_review($form, $form_state, $checkout_pane, $order) {
+function commerce_userpoints_discount_pane_review($form, $form_state, $checkout_pane, $order) {
   // Extract the View and display keys from the cart contents pane setting.
-  list($view_id, $display_id) = explode('|', variable_get('commerce_userpoints_cart_summary', 'commerce_userpoints_cart_summary|default'));
+  list($view_id, $display_id) = explode('|', variable_get('commerce_userpoints_discount_cart_summary', 'commerce_userpoints_discount_cart_summary|default'));
 
   return commerce_embed_view($view_id, $display_id, array($order->order_id));
 }
@@ -74,7 +74,7 @@ function commerce_userpoints_pane_review($form, $form_state, $checkout_pane, $or
 /**
  * Checkout pane callback: returns the cart contents pane's settings form.
  */
-function commerce_userpoints_pane_settings_form($checkout_pane) {
+function commerce_userpoints_discount_pane_settings_form($checkout_pane) {
   $form = array();
 
   // Build an options array of Views available for the cart contents pane.
@@ -90,12 +90,12 @@ function commerce_userpoints_pane_settings_form($checkout_pane) {
     }
   }
 
-  $form['commerce_userpoints_review_pane_view'] = array(
+  $form['commerce_userpoints_discount_review_pane_view'] = array(
     '#type' => 'select',
     '#title' => t('Cart contents View'),
     '#description' => t('Specify the View to use in the review pane to display the coupons.'),
     '#options' => $options,
-    '#default_value' => variable_get('commerce_userpoints_cart_summary', 'commerce_userpoints_cart_summary|default'),
+    '#default_value' => variable_get('commerce_userpoints_discount_cart_summary', 'commerce_userpoints_discount_cart_summary|default'),
   );
 
   return $form;
