@@ -9,7 +9,85 @@
  * Form implementation set in commerce_userpoints_discount_commerce_checkout_pane_info().
  */
 function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
-  $pane_form['widget'] = commerce_userpoints_points_widget($form, $form_state, $order);
+  $currencies = commerce_userpoints_currencies();
+
+  if (empty($currencies)) {
+    drupal_set_message(t('No !points currencies have been set up.', userpoints_translation()), 'error');
+    return array();
+  }
+
+  $total = field_get_items('commerce_order', $order, 'commerce_order_total');
+  $total = $total[0];
+
+  $default_currency = reset($currencies);
+  if (count($currencies) > 1) {
+    $options = array();
+    foreach ($currencies as $currency) {
+      $options[$currency['code']] = $currency['name'];
+    }
+
+    $pane_form['currency'] = array(
+      '#type' => 'select',
+      '#title' => t('!Points currency', userpoints_translation()),
+      '#options' => $options,
+      '#default_value' => $default_currency['code'],
+      '#ajax' => array(
+        'callback' => 'commerce_userpoints_discount_ajax_update_info',
+        'wrapper' => 'commerce-userpoints-widget-info',
+      ),
+    );
+  }
+  else {
+    $pane_form['currency'] = array(
+      '#type' => 'value',
+      '#value' => $default_currency['code'],
+    );
+  }
+
+  if (isset($form_state['values']['commerce_userpoints_discount']['currency'])) {
+    $current_code = $form_state['values']['commerce_userpoints_discount']['currency'];
+    $current_tid = $currencies[$form_state['values']['commerce_userpoints_discount']['currency']]['tid'];
+  }
+  else {
+    $current_code = $default_currency['code'];
+    $current_tid = $default_currency['tid'];
+  }
+
+  $worth_of_a_point = commerce_currency_convert(1, $current_code, $total['currency_code']);
+  $worth_of_order = commerce_currency_convert($total['amount'], $total['currency_code'], $current_code) * 100;
+
+  $arguments = array(
+    '%points' => $worth_of_a_point,
+    '@order_currency' => commerce_currency_format($worth_of_a_point, $total['currency_code']),
+    '@count_needed' => commerce_currency_format($worth_of_order, $current_code),
+  ) + userpoints_translation();
+
+
+  $pane_form['info'] = array(
+    '#type' => 'container',
+    '#id' => 'commerce-userpoints-widget-info',
+    'exchange' => array(
+      '#type' => 'item',
+      '#prefix' => '<div class="commerce-userpoints-exchange-rate">',
+      '#title' => t('Exchange rate'),
+      '#markup' => t('A !point is worth @order_currency. @count_needed required to pay this order in full.', $arguments),
+      '#suffix' => '</div>',
+    ),
+    'available' => array(
+      '#type' => 'item',
+      '#prefix' => '<div class="commerce-userpoints-available">',
+      '#title' => t('Available'),
+      '#markup' => t('You have @count !points available for use.', array('@count' => userpoints_get_current_points(NULL, $current_tid)) + userpoints_translation()),
+      '#suffix' => '</div>',
+    ),
+  );
+
+  $pane_form['amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount'),
+    '#description' => t('The amount of !points you want to use.', userpoints_translation()),
+    '#size' => 10,
+  );
 
   $pane_form['cup_submit_all'] = array(
     '#type' => 'submit',

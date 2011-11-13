@@ -325,7 +325,6 @@ function commerce_userpoints_discount_line_item_populate(&$line_item, $order_id,
     FALSE
   );
 
-  dpm($line_item_wrapper->value());
   // Return the line item.
   return $line_item_wrapper->value();
 }
@@ -575,4 +574,12 @@ function commerce_userpoints_discount_use_credit_callback($form, $form_state, $u
 
     commerce_userpoints_discount_line_item_save($line_item);
   }
+}
+
+/**
+ * Ajajx callback to update the exchange rate/points info.
+ */
+function commerce_userpoints_discount_ajax_update_info($form, &$form_state) {
+
+  return $form['commerce_userpoints_discount']['info'];
 }
