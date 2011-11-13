@@ -54,7 +54,7 @@ function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $c
   }
 
   $worth_of_a_point = commerce_currency_convert(1, $current_code, $total['currency_code']);
-  $worth_of_order = commerce_currency_convert($total['amount'], $total['currency_code'], $current_code) * 100;
+  $worth_of_order = commerce_currency_convert($total['amount'], $total['currency_code'], $current_code);
 
   $arguments = array(
     '%points' => $worth_of_a_point,
@@ -93,7 +93,7 @@ function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $c
     '#type' => 'submit',
     '#title' => t('All credit'),
     '#value' => t('Use all my credit'),
-    '#limit_validation_errors' => array(),       // No validation.
+    '#limit_validation_errors' => array(array('commerce_userpoints_discount')),
     '#submit' => array('commerce_userpoints_discount_use_credit_callback_all'),
   );
 
@@ -102,6 +102,7 @@ function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $c
     //'#title' => 'input_credit',
     '#access' => TRUE,
     '#value' => t('Use credit'),
+    '#limit_validation_errors' => array(array('commerce_userpoints_discount')),
     '#submit' => array('commerce_userpoints_discount_use_credit_callback_input'),
   );
 
@@ -109,7 +110,7 @@ function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $c
     '#type' => 'submit',
     '#title' => t('Remove'),
     '#value' => t('Get back'),
-    '#limit_validation_errors' => array(),       // No validation.
+    '#limit_validation_errors' => array(array('commerce_userpoints_discount')),
     '#submit' => array('commerce_userpoints_discount_remove_credit_callback'),
   );
   return $pane_form;

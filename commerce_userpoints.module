@@ -100,6 +100,9 @@ function commerce_userpoints_commerce_currency_info() {
       'name' => $currency['name'],
       'format_callback' => 'commerce_userpoints_format_currency',
       'rounding_step' => '1',
+      // Userpoints currently does not support decimals.
+      'decimals' => 0,
+      'conversion_rate' => 0.01,
     );
   }
   return $currencies;
