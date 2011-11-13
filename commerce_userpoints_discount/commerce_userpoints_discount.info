@@ -2,8 +2,9 @@ name = Commerce Userpoints Discount
 description = Allow commerce customer to create a line item using userpoints points
 package = Commerce (contrib)
 core = 7.x
-  
+
 dependencies[] = entity
 dependencies[] = userpoints
 dependencies[] = commerce
 dependencies[] = commerce_line_item
+dependencies[] = commerce_userpoints

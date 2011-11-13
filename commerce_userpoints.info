@@ -1,0 +1,8 @@
+name = Commerce Userpoints
+description = Provides common settings and functionality for the various Commerce Userpoints modules.
+core = 7.x
+configure = admin/commerce/config/currency/userpoints
+package = Commerce (contrib)
+
+dependencies[] = userpoints
+dependencies[] = commerce

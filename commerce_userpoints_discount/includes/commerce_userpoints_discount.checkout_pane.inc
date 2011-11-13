@@ -9,31 +9,7 @@
  * Form implementation set in commerce_userpoints_discount_commerce_checkout_pane_info().
  */
 function commerce_userpoints_discount_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
-  $pane_form = array();
-
-  $pane_form['cup_information'] = array(
-    '#type' => 'item',
-    '#title' => t('Using your credit'),
-    '#description' => t('Enter the amount of credit you wish to use.'),
-    '#prefix' => '<div id="cup-available-credit-div">',
-    '#suffix' => '</div>',
-  );
-
-  $pane_form['cup_credit_amount'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Amount'),
-    '#description' => t('Amount of credit to use.'),
-    '#size' => 10,
-  );
-
-  $pane_form['cup_credit_available'] = array(
-    '#type' => 'item',
-    '#title' => t('Available credit'),
-    '#description' => t('Amount of credit to use.'),
-    '#markup' => check_plain(userpoints_get_current_points(NULL, variable_get('commerce_userpoints_discount_default_termid'))),
-    '#prefix' => '<div id="cup-available-credit-div">',
-    '#suffix' => '</div>',
-  );
+  $pane_form['widget'] = commerce_userpoints_points_widget($form, $form_state, $order);
 
   $pane_form['cup_submit_all'] = array(
     '#type' => 'submit',
